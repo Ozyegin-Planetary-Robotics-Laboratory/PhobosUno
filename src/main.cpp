@@ -8,9 +8,8 @@
 #define ZED_SERVO_SIG  3
 
 #define LED_PIN_RED    7
-#define LED_PIN_BLUE   6
-#define LED_PIN_GREEN  5
-#define LED_PIN_YELLOW 4
+#define LED_PIN_BLUE   5
+#define LED_PIN_GREEN  6
 
 enum PacketState
 {
@@ -23,9 +22,9 @@ enum PacketState
 
 enum DeviceID
 {
-  PAN=0x02, //0x02
-  LED,      //0x03
-  EEF       //0x04
+  PAN_ID=0x02, //0x02
+  LED_ID,      //0x03
+  EEF_ID       //0x04
 };
 
 enum LEDCommand
@@ -46,9 +45,9 @@ enum EEFCommand
 PacketState curr_state = BEGIN;
 Servo zed_servo;
 
-void handlePan(char c);
-void handleLED(char c);
-void handleEEF(char c);
+void handlePan(int c);
+void handleLED(int c);
+void handleEEF(int c);
 
 void setup()
 {
@@ -60,26 +59,23 @@ void setup()
   pinMode(LED_PIN_RED, OUTPUT);
   pinMode(LED_PIN_BLUE, OUTPUT);
   pinMode(LED_PIN_GREEN, OUTPUT);
-  pinMode(LED_PIN_YELLOW, OUTPUT);
   zed_servo.attach(ZED_SERVO_SIG);
   zed_servo.write(0);
   digitalWrite(L298N_PIN_ENA, LOW);
   digitalWrite(L298N_PIN_IN1, LOW);
   digitalWrite(L298N_PIN_IN2, LOW);
-  digitalWrite(ZED_SERVO_SIG, LOW);
   digitalWrite(LED_PIN_RED, LOW);
   digitalWrite(LED_PIN_BLUE, LOW);
   digitalWrite(LED_PIN_GREEN, LOW);
-  digitalWrite(LED_PIN_YELLOW, LOW);
 }
 
 void loop()
 {
   if (Serial.available() < 1) return;
-  char c = Serial.read();
-  if (c == 0xFF)
+  int c = Serial.read();
+  if (c == 0xff)
   {
-    Serial.write(0xFF);
+    Serial.write(0xff);
     return;
   }
 
@@ -94,13 +90,13 @@ void loop()
   case PacketState::DEVICE:
     switch ((DeviceID) c)
     {
-    case DeviceID::PAN:
+    case DeviceID::PAN_ID:
       curr_state = PacketState::PAN;
       break;
-    case DeviceID::LED:
+    case DeviceID::LED_ID:
       curr_state = PacketState::LED;
       break;
-    case DeviceID::EEF:
+    case DeviceID::EEF_ID:
       curr_state = PacketState::EEF;
       break;
     default:
@@ -123,7 +119,7 @@ void loop()
   curr_state = PacketState::BEGIN;
 }
 
-void handlePan(char c)
+void handlePan(int c)
 {
   if (c < 0x02 || c > 0xB6)
   {
@@ -134,7 +130,7 @@ void handlePan(char c)
   zed_servo.write(angle);
 }
 
-void handleLED(char c)
+void handleLED(int c)
 {
   switch (c)
   {
@@ -142,33 +138,31 @@ void handleLED(char c)
     digitalWrite(LED_PIN_RED, HIGH);
     digitalWrite(LED_PIN_BLUE, LOW);
     digitalWrite(LED_PIN_GREEN, LOW);
-    digitalWrite(LED_PIN_YELLOW, LOW);
     break;
   case LEDCommand::BLUE:
     digitalWrite(LED_PIN_RED, LOW);
     digitalWrite(LED_PIN_BLUE, HIGH);
     digitalWrite(LED_PIN_GREEN, LOW);
-    digitalWrite(LED_PIN_YELLOW, LOW);
+    break;
   case LEDCommand::GREEN:
     digitalWrite(LED_PIN_RED, LOW);
     digitalWrite(LED_PIN_BLUE, LOW);
     digitalWrite(LED_PIN_GREEN, HIGH);
-    digitalWrite(LED_PIN_YELLOW, LOW);
+    break;
   case LEDCommand::YELLOW:
-    digitalWrite(LED_PIN_RED, LOW);
+    digitalWrite(LED_PIN_RED, HIGH);
     digitalWrite(LED_PIN_BLUE, LOW);
-    digitalWrite(LED_PIN_GREEN, LOW);
-    digitalWrite(LED_PIN_YELLOW, HIGH);
+    digitalWrite(LED_PIN_GREEN, HIGH);
+    break;
   default:
     digitalWrite(LED_PIN_RED, LOW);
     digitalWrite(LED_PIN_BLUE, LOW);
     digitalWrite(LED_PIN_GREEN, LOW);
-    digitalWrite(LED_PIN_YELLOW, LOW);
     break;
   }
 }
 
-void handleEEF(char c)
+void handleEEF(int c)
 {
   switch (c)
   {
